@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Robin Hood: Hidden Loot</title>
+  <link rel="stylesheet" href="styles/pixel.css" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/animations.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="stage" class="stage">
+      <div id="room" class="room">
+        <header id="hud" class="hud">
+          <div id="timer" class="timer">60</div>
+          <div id="loot" class="loot" aria-label="Stolen loot"></div>
+          <div class="hud-buttons">
+            <button id="btn-mute" class="icon-btn" title="Sound on/off" aria-label="Sound">♪</button>
+            <button id="btn-font" class="icon-btn" title="Easy-to-read font" aria-label="Font">Aa</button>
+          </div>
+        </header>
+
+        <aside id="panel" class="panel">
+          <div id="active-clue" class="active-clue"></div>
+          <ol id="clue-list" class="clue-list"></ol>
+        </aside>
+
+        <img id="robin" class="robin" src="assets/sprites/robin.png" alt="Robin Hood" />
+        <div id="spots" class="spots"></div>
+        <div id="legend" class="legend"></div>
+        <div id="fx" class="fx-layer"></div>
+      </div>
+      <div id="screen" class="screen"></div>
+    </div>
+  </div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

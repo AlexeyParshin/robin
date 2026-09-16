@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Robin Hood — Content Admin</title>
+  <link rel="stylesheet" href="styles/pixel.css" />
+  <link rel="stylesheet" href="styles/admin.css" />
+</head>
+<body class="admin">
+  <div id="gate" class="gate">
+    <div class="card">
+      <h1>Grown-ups only</h1>
+      <p>Quick check: what is <b id="gate-q"></b>?</p>
+      <input id="gate-a" type="number" inputmode="numeric" autofocus />
+      <button id="gate-btn" class="btn">Enter</button>
+      <a href="index.html">← back to the game</a>
+    </div>
+  </div>
+
+  <div id="admin" class="admin-wrap" hidden>
+    <header class="topbar">
+      <h1>Hidden Loot · Admin</h1>
+      <nav class="tabs">
+        <button class="tab active" data-tab="items">Items</button>
+        <button class="tab" data-tab="spots">Places</button>
+        <button class="tab" data-tab="rounds">Rounds</button>
+        <button class="tab" data-tab="pack">Export / Import</button>
+      </nav>
+      <a class="btn secondary" href="index.html">▶ Play</a>
+    </header>
+
+    <main>
+      <section id="tab-items" class="tab-page active"></section>
+      <section id="tab-spots" class="tab-page"></section>
+      <section id="tab-rounds" class="tab-page"></section>
+      <section id="tab-pack" class="tab-page"></section>
+    </main>
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script type="module" src="src/admin/admin.js"></script>
+</body>
+</html>
