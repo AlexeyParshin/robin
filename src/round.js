@@ -39,8 +39,10 @@ export function clueParts(task, verb = 'is') {
  * @param {object[]} [keepItems] reuse these items (retry after defeat)
  */
 export function buildRound(content, cfg, keepItems = null) {
-  const spotCount = Math.min(cfg.spots, content.spots.length);
-  const spots = shuffle(content.spots).slice(0, spotCount);
+  let pool = cfg.room ? content.spots.filter((s) => s.room === cfg.room) : content.spots;
+  if (pool.length < Math.min(cfg.spots, 1)) pool = content.spots;
+  const spotCount = Math.min(cfg.spots, pool.length);
+  const spots = shuffle(pool).slice(0, spotCount);
   const itemCount = Math.min(cfg.items, content.items.length);
   const items = keepItems ? shuffle(keepItems) : shuffle(content.items).slice(0, itemCount);
 
@@ -54,7 +56,8 @@ export function buildRound(content, cfg, keepItems = null) {
     return { id: `${item.id}@${spot.id}`, item, spot, prep, found: false, wrong: 0 };
   });
 
-  return { cfg, spots, items, tasks: shuffle(tasks), timer: cfg.timer };
+  const room = content.rooms?.find((r) => r.id === cfg.room) || content.rooms?.[0] || null;
+  return { cfg, room, spots, items, tasks: shuffle(tasks), timer: cfg.timer };
 }
 
 export function evaluate(round) {

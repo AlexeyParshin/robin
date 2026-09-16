@@ -68,7 +68,7 @@ tr.disabled td { opacity: 0.45; }
 /* Spot placement editor */
 .room-editor {
   position: relative; width: 960px; height: 540px; transform-origin: top left;
-  background: url('../assets/sprites/room.png'); image-rendering: pixelated; border: 3px solid var(--ink);
+  background: url('../assets/sprites/room-kitchen.png'); image-rendering: pixelated; border: 3px solid var(--ink);
   user-select: none;
 }
 .room-editor-wrap { overflow: hidden; }
@@ -80,6 +80,11 @@ tr.disabled td { opacity: 0.45; }
 .box .handle { position: absolute; right: -8px; bottom: -8px; width: 16px; height: 16px; background: var(--accent); border: 2px solid #000; cursor: nwse-resize; }
 .box.selected { border-color: var(--ok); }
 .box.disabled { opacity: 0.35; }
+.zbox {
+  position: absolute; border: 3px dashed var(--c); background: color-mix(in srgb, var(--c) 30%, transparent); cursor: move; z-index: 5;
+}
+.zbox .name { position: absolute; left: 0; top: -20px; background: var(--c); color: #000; font-size: 11px; padding: 1px 6px; white-space: nowrap; }
+.zbox .handle { position: absolute; right: -8px; bottom: -8px; width: 14px; height: 14px; background: var(--c); border: 2px solid #000; cursor: nwse-resize; }
 
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);

@@ -10,6 +10,21 @@ function show(html) {
   return screenEl;
 }
 
+export function isShown() { return screenEl.classList.contains('show'); }
+
+export function pause({ onResume, onQuit }) {
+  show(`
+    <h1>Paused</h1>
+    <img class="title-robin pixel" src="assets/sprites/robin.png" alt="">
+    <div class="row">
+      ${button('resume', '▶ Resume')}
+      ${button('quit', 'Main menu', 'secondary')}
+    </div>
+    <p class="small">Quitting ends this heist — you can start it again from the menu.</p>
+  `);
+  onAction({ resume: onResume, quit: onQuit });
+}
+
 export function hide() {
   screenEl.classList.remove('show');
   screenEl.innerHTML = '';
@@ -40,22 +55,26 @@ export function title({ round, total, onStart, onReset, canContinue }) {
     <img class="title-robin pixel" src="assets/sprites/robin.png" alt="">
     <h1>Robin Hood<br>Hidden Loot</h1>
     <p>The rich family is asleep. Read where the things are hidden,
-       click the right place and steal them for the poor!</p>
+       click the numbered zone — <b>on</b>, <b>under</b>, <b>in</b>… — and steal them for the poor!</p>
     <div class="row">
       ${button('start', canContinue ? `Continue: Heist ${round + 1}/${total}` : 'Start Heist 1')}
       ${canContinue ? button('reset', 'Start over', 'secondary') : ''}
     </div>
-    <p class="small">Keys 1–5 pick a place · Space repeats the clue</p>
+    <p class="small">Keys 1–9 pick a numbered zone · Space repeats the clue</p>
   `);
   screenEl.insertAdjacentHTML('beforeend', '<a class="gear" href="admin.html">⚙ grown-ups</a>');
   onAction({ start: onStart, reset: onReset });
 }
 
-export function roundIntro({ round, total, cfg, onGo }) {
+function sceneImg(name) {
+  return `<img class="scene-img pixel" src="assets/sprites/scenes/${name}.png" alt="">`;
+}
+
+export function roundIntro({ round, total, cfg, room, onGo }) {
   show(`
-    <h2>Heist ${round + 1} of ${total}</h2>
+    <h2>Heist ${round + 1} of ${total}${room ? ` · ${room.name}` : ''}</h2>
     <h1>${cfg.items} things<br>${cfg.timer} seconds</h1>
-    <p>Find every item before the timer runs out.<br>Read the clue, then click where the thing is.</p>
+    <p>Read the clue, then click the numbered zone where the thing is.</p>
     ${button('go', 'Sneak in ▶')}
   `);
   onAction({ go: onGo });
@@ -65,6 +84,7 @@ export function victory({ round, total, tasks, timeLeft, onNext }) {
   const last = round + 1 >= total;
   show(`
     <h1>You robbed the rich!</h1>
+    ${sceneImg('victory')}
     <h2>Heist ${round + 1} done · ${timeLeft}s left</h2>
     ${lootGrid(tasks)}
     ${button('next', last ? 'See the loot ▶' : 'Next Heist ▶')}
@@ -75,9 +95,7 @@ export function victory({ round, total, tasks, timeLeft, onNext }) {
 export function putbackIntro({ found, total, bonus, onGo }) {
   show(`
     <h1>Time's up!</h1>
-    <h2>You found ${found} of ${total}. The family is waking up!</h2>
-    <p>Quick! Put everything back where it was before they notice.<br>
-       You have <b>${bonus} seconds</b>.</p>
+    <h2>${found} of ${total} found. Put them back — ${bonus} seconds!</h2>
     ${button('go', 'Put it back! ▶')}
   `);
   onAction({ go: onGo });
@@ -86,7 +104,7 @@ export function putbackIntro({ found, total, bonus, onGo }) {
 export function escaped({ onRetry }) {
   show(`
     <h1>You escaped unseen</h1>
-    <p>Everything is back in place. Nobody noticed a thing.<br>Let's try that heist again — faster this time!</p>
+    ${sceneImg('escaped')}
     ${button('retry', 'Retry Heist ▶')}
   `);
   onAction({ retry: onRetry });
@@ -95,7 +113,7 @@ export function escaped({ onRetry }) {
 export function caught({ onRetry }) {
   show(`
     <h1 style="color:var(--danger)">Caught!</h1>
-    <p>The family noticed the missing things. Robin ran away empty-handed.</p>
+    ${sceneImg('caught')}
     ${button('retry', 'Try again ▶')}
   `);
   onAction({ retry: onRetry });
@@ -103,8 +121,8 @@ export function caught({ onRetry }) {
 
 export function defeat({ onRetry }) {
   show(`
-    <h1 style="color:var(--danger)">The dogs woke up!</h1>
-    <p>You didn't find anything. Robin had to run!<br>Try again — the same things are hidden, just read carefully.</p>
+    <h1 style="color:var(--danger)">Nothing found!</h1>
+    ${sceneImg('defeat')}
     ${button('retry', 'Try again ▶')}
   `);
   onAction({ retry: onRetry });

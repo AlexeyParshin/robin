@@ -35,9 +35,9 @@ function wordLabel(x, y, text) {
  * Item pops out of the spot, spins, then flies in an arc into the loot slot.
  * Returns a promise that resolves when the item lands.
  */
-export async function collectAnimation(task, spot, slotRect, { color = '#ffd166' } = {}) {
-  const sx = spot.x + spot.w / 2 - 24;
-  const sy = spot.y + spot.h / 2 - 24;
+export async function collectAnimation(task, zone, slotRect, { color = '#ffd166' } = {}) {
+  const sx = zone.x + zone.w / 2 - 24;
+  const sy = zone.y + zone.h / 2 - 24;
   const img = document.createElement('img');
   img.className = 'fx-item pop';
   img.src = imageURL(task.item);
@@ -65,12 +65,12 @@ export async function collectAnimation(task, spot, slotRect, { color = '#ffd166'
 }
 
 /** Reverse: item flies from the loot bar back to the spot. */
-export async function returnAnimation(task, spot, slotRect) {
+export async function returnAnimation(task, zone, slotRect) {
   const from = slotRect ? toStage(slotRect) : { x: 460, y: 10, w: 44, h: 44 };
   const sx = from.x + from.w / 2 - 24;
   const sy = from.y + from.h / 2 - 24;
-  const tx = spot.x + spot.w / 2 - 24;
-  const ty = spot.y + spot.h / 2 - 24;
+  const tx = zone.x + zone.w / 2 - 24;
+  const ty = zone.y + zone.h / 2 - 24;
   const img = document.createElement('img');
   img.className = 'fx-item';
   img.src = imageURL(task.item);

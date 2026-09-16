@@ -5,16 +5,28 @@ All sprites are PNG with transparency, drawn for a **960 × 540** stage and rend
 
 | File | Size (px) | Notes |
 |---|---|---|
-| `sprites/room.png` | 960 × 540 | Background. Floor starts at y = 400. Left 240 px is covered by the clue panel. |
+| `sprites/room-kitchen.png`, `room-living.png`, `room-bedroom.png` | 960 × 540 | Room backgrounds (one per heist). Floor starts at y = 400. Left 240 px is covered by the clue panel. |
+| `sprites/scenes/victory.png` | 144 × 96 | Robin with the sack of loot (shown 2× on the victory screen). |
+| `sprites/scenes/escaped.png` | 144 × 96 | Robin running away without the sack. |
+| `sprites/scenes/caught.png` | 144 × 96 | Robin behind bars. |
+| `sprites/scenes/defeat.png` | 144 × 96 | Puzzled Robin, arms spread. |
 | `sprites/robin.png` | 48 × 72 | The hero, stands at (244, 448). |
-| `sprites/fridge.png` | 110 × 220 | Place sprite, default hotspot (250, 180). |
-| `sprites/bed.png` | 240 × 130 | (715, 280) |
-| `sprites/table.png` | 200 × 120 | (400, 290) |
-| `sprites/bag.png` | 90 × 90 | (620, 320) |
-| `sprites/shelf.png` | 220 × 150 | (400, 90) |
+| `sprites/fridge.png` | 110 × 220 | Kitchen |
+| `sprites/table.png` | 200 × 120 | Kitchen |
+| `sprites/cupboard.png` | 200 × 130 | Kitchen |
+| `sprites/bin.png` | 70 × 80 | Kitchen |
+| `sprites/sofa.png` | 220 × 120 | Living room |
+| `sprites/tv.png` | 160 × 110 | Living room |
+| `sprites/shelf.png` | 220 × 150 | Living room |
+| `sprites/bag.png` | 90 × 90 | Living room |
+| `sprites/bed.png` | 240 × 130 | Bedroom |
+| `sprites/wardrobe.png` | 120 × 280 | Bedroom |
+| `sprites/nightstand.png` | 90 × 80 | Bedroom |
+| `sprites/chair.png` | 80 × 110 | Bedroom |
+| `sprites/box.png` | 70 × 60 | Bedroom |
 | `sprites/items/*.png` | 32 × 32 | Item icons; shown at 32 px in the loot bar and 48 px in animations. |
 
-Hotspot positions/sizes can be changed without touching code in the admin (**Places** tab).
+Furniture positions and the clickable **zones** (one per preposition) can be changed without touching code in the admin (**Places** tab).
 
 Palette used by the placeholders:
 

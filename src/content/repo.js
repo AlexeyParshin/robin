@@ -91,10 +91,11 @@ export async function loadContent() {
   ]);
   const items = mergeById(DEFAULT_CONTENT.items, pack?.items, userItems).filter((i) => i.enabled !== false);
   const spots = mergeById(DEFAULT_CONTENT.spots, pack?.spots, userSpots).filter((s) => s.enabled !== false);
+  const rooms = mergeById(DEFAULT_CONTENT.rooms, pack?.rooms);
   let rounds = DEFAULT_CONTENT.rounds;
   if (pack?.rounds?.length) rounds = pack.rounds;
   if (userRounds.length) rounds = userRounds.sort((a, b) => a.index - b.index).map(({ id, index, ...r }) => r);
-  return { items, spots, rounds };
+  return { rooms, items, spots, rounds };
 }
 
 /** Raw layers for the admin (so it can show what is default vs. user-edited). */
@@ -108,8 +109,9 @@ export async function loadLayers() {
 // ---------- Export / import ----------
 export async function exportPack() {
   const [pack, userItems, userSpots] = await Promise.all([fetchPack(), db.all('items'), db.all('spots')]);
-  const { rounds } = await loadContent();
+  const { rounds, rooms } = await loadContent();
   const content = {
+    rooms,
     items: mergeAll(DEFAULT_CONTENT.items, pack?.items, userItems),
     spots: mergeAll(DEFAULT_CONTENT.spots, pack?.spots, userSpots),
     rounds,
@@ -122,6 +124,7 @@ export async function exportPack() {
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
+    rooms: content.rooms,
     items: await Promise.all(content.items.map(serialise)),
     spots: await Promise.all(content.spots.map(serialise)),
     rounds: content.rounds,

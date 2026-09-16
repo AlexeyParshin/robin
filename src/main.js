@@ -7,7 +7,7 @@ import * as panel from './ui/panel.js';
 import * as hud from './ui/hud.js';
 import * as screens from './ui/screens.js';
 import * as fx from './fx.js';
-import { PREPOSITIONS, STAGE } from './data/content.js';
+import { PREPOSITIONS, STAGE, zoneOf } from './data/content.js';
 
 const game = {
   content: null,
@@ -20,7 +20,10 @@ const game = {
   timerId: null,
   busy: false,
   lastTick: 0,
+  paused: false,
+  onTimeUp: null,
 };
+if (new URLSearchParams(location.search).has('debug')) window.__game = game;
 
 // ---------- Stage scaling ----------
 function fitStage() {
@@ -30,11 +33,21 @@ function fitStage() {
 window.addEventListener('resize', fitStage);
 fitStage();
 
+function setRoom(room) {
+  const el = document.getElementById('room');
+  el.style.backgroundImage = room?.background ? `url("${room.background}")` : '';
+}
+
 // ---------- Timer ----------
 function startTimer(seconds, onEnd) {
   stopTimer();
   game.timeLeft = seconds;
-  hud.renderTimer(seconds, { bonus: game.mode === 'putback' });
+  game.onTimeUp = onEnd;
+  resumeTimer();
+}
+function resumeTimer() {
+  const onEnd = game.onTimeUp;
+  hud.renderTimer(game.timeLeft, { bonus: game.mode === 'putback' });
   let last = performance.now();
   game.timerId = setInterval(() => {
     const now = performance.now();
@@ -50,6 +63,18 @@ function stopTimer() { clearInterval(game.timerId); game.timerId = null; }
 function addTime(delta) {
   game.timeLeft = Math.max(0, game.timeLeft + delta);
   hud.renderTimer(game.timeLeft, { bonus: game.mode === 'putback' });
+}
+
+// ---------- Pause ----------
+function pauseGame() {
+  if (game.mode === 'idle' || game.paused) return;
+  game.paused = true;
+  stopTimer();
+  audio.stopMusic();
+  screens.pause({
+    onResume: () => { audio.sfx.click(); game.paused = false; screens.hide(); audio.startMusic(); resumeTimer(); },
+    onQuit: () => { audio.sfx.click(); game.paused = false; game.busy = false; showTitle(); },
+  });
 }
 
 // ---------- Flow ----------
@@ -71,7 +96,9 @@ function startRound(index, keepItems = null) {
   game.roundIndex = index;
   const cfg = game.content.rounds[index];
   game.round = buildRound(game.content, cfg, keepItems);
-  screens.roundIntro({ round: index, total: game.content.rounds.length, cfg, onGo: beginSteal });
+  setRoom(game.round.room);
+  scene.renderSpots(game.round.spots, () => {});
+  screens.roundIntro({ round: index, total: game.content.rounds.length, cfg, room: game.round.room, onGo: beginSteal });
 }
 
 function beginSteal() {
@@ -90,10 +117,11 @@ function beginSteal() {
   startTimer(r.timer, onStealTimeUp);
 }
 
-async function onSpotClick(spot) {
-  if (game.busy || !game.active || game.mode === 'idle') return;
+async function onSpotClick(spot, prep) {
+  if (game.busy || game.paused || !game.active || game.mode === 'idle') return;
   const task = game.active;
-  if (spot.id !== task.spot.id) return wrongPick(task, spot);
+  if (spot.id !== task.spot.id || prep !== task.prep) return wrongPick(task, spot, prep);
+  const zone = zoneOf(spot, prep);
 
   game.busy = true;
   audio.sfx.pickup();
@@ -104,13 +132,14 @@ async function onSpotClick(spot) {
     const index = game.round.tasks.filter((t) => t.found).length - 1;
     task.slot = index;
     panel.markFound(task);
-    await fx.collectAnimation(task, spot, hud.lootSlotRect(index), { color });
+    await fx.collectAnimation(task, zone, hud.lootSlotRect(index), { color });
     hud.fillLootSlot(index, task);
     rememberWord(task);
   } else {
     task.returned = true;
     panel.markFound(task);
-    await fx.returnAnimation(task, spot, hud.lootSlotRect(task.slot));
+    await fx.returnAnimation(task, zone, hud.lootSlotRect(task.slot));
+    scene.placeItemInZone(spot, prep, task.item);
     hud.markSlotReturned(task.id);
   }
   game.busy = false;
@@ -128,13 +157,13 @@ function pickNextTaskFor(remaining) {
   scene.clearHints();
 }
 
-function wrongPick(task, spot) {
+function wrongPick(task, spot, prep) {
   audio.sfx.wrong();
-  scene.shakeSpot(spot.id);
+  scene.shakeZone(spot.id, prep);
   fx.redFlash();
   addTime(-(game.round.cfg.penalty ?? 2));
   task.wrong = (task.wrong || 0) + 1;
-  if (task.wrong >= 2) scene.hintSpot(task.spot.id, true);
+  if (task.wrong >= 2) scene.hintZone(task.spot.id, task.prep, true);
 }
 
 function rememberWord(task) {
@@ -225,9 +254,11 @@ document.getElementById('btn-font').addEventListener('click', (e) => {
   e.currentTarget.classList.toggle('off', !on);
   game.progress = storage.save({ dyslexic: on });
 });
+document.getElementById('btn-pause').addEventListener('click', () => { audio.unlock(); pauseGame(); });
 document.addEventListener('keydown', (e) => {
-  if (game.mode === 'idle' || game.busy) return;
-  if (e.key >= '1' && e.key <= '9') scene.spotByIndex(Number(e.key) - 1)?.click();
+  if (e.key === 'Escape' && game.mode !== 'idle' && !screens.isShown()) { e.preventDefault(); return pauseGame(); }
+  if (game.mode === 'idle' || game.busy || game.paused) return;
+  if (e.key >= '1' && e.key <= '9') scene.zoneByIndex(Number(e.key) - 1)?.click();
   if (e.key === ' ') { e.preventDefault(); if (game.active) panel.setActiveTask(game.active, game.mode === 'putback' ? 'put' : 'is'); }
 });
 
@@ -237,8 +268,10 @@ async function boot() {
   if (game.progress.muted) { audio.setMuted(true); document.getElementById('btn-mute').classList.add('off'); }
   if (game.progress.dyslexic) document.body.classList.add('easy-font'); else document.getElementById('btn-font').classList.add('off');
   hud.renderLegend();
-  hud.renderLootSlots(5);
-  scene.renderSpots(game.content.spots, () => {});
+  hud.renderLootSlots(game.content.rounds[0]?.items ?? 3);
+  const firstRoom = game.content.rooms?.find((r) => r.id === game.content.rounds[0]?.room) || game.content.rooms?.[0];
+  setRoom(firstRoom);
+  scene.renderSpots(game.content.spots.filter((s) => !firstRoom || s.room === firstRoom.id), () => {});
   hud.renderTimer(game.content.rounds[0]?.timer ?? 60);
   showTitle();
 }

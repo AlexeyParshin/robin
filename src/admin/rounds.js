@@ -13,11 +13,14 @@ function currentRounds() {
 export function renderRounds() {
   const rounds = currentRounds().map((r) => ({ ...r }));
   const enabledItems = mergedWithSource('items').filter((i) => !i.deleted && i.enabled !== false).length;
-  const enabledSpots = mergedWithSource('spots').filter((s) => !s.deleted && s.enabled !== false).length;
+  const liveSpots = mergedWithSource('spots').filter((s) => !s.deleted && s.enabled !== false);
+  const roomList = state.layers.pack?.rooms?.length ? state.layers.pack.rooms : state.layers.defaults.rooms;
+  const spotsInRoom = (roomId) => liveSpots.filter((s) => !roomId || s.room === roomId).length;
+  const enabledSpots = liveSpots.length;
   page.innerHTML = '';
   const card = el(`<div class="card"><h2>Rounds (heists)</h2>
-    <p class="hint">You have <b>${enabledItems}</b> enabled items and <b>${enabledSpots}</b> enabled places. A round cannot ask for more than that.</p>
-    <table><thead><tr><th>#</th><th>Items to find</th><th>Places used</th><th>Timer (s)</th><th>Put-back bonus (s)</th><th>Wrong click penalty (s)</th><th></th></tr></thead><tbody></tbody></table>
+    <p class="hint">You have <b>${enabledItems}</b> enabled items and <b>${enabledSpots}</b> enabled places (${roomList.map((r) => `${r.name}: ${spotsInRoom(r.id)}`).join(', ')}). A round cannot ask for more than its room has.</p>
+    <table><thead><tr><th>#</th><th>Room</th><th>Items to find</th><th>Places used</th><th>Timer (s)</th><th>Put-back bonus (s)</th><th>Wrong click penalty (s)</th><th></th></tr></thead><tbody></tbody></table>
     <div class="error"></div>
     <div class="row" style="margin-top:12px">
       <button class="btn save">Save rounds</button>
@@ -31,6 +34,7 @@ export function renderRounds() {
     tbody.innerHTML = '';
     rounds.forEach((r, i) => {
       const tr = el(`<tr><td>${i + 1}</td>
+        <td><select name="room">${roomList.map((rm) => `<option value="${rm.id}" ${r.room === rm.id ? 'selected' : ''}>${rm.name}</option>`).join('')}</select></td>
         <td><input type="number" min="1" max="12" name="items" value="${r.items}"></td>
         <td><input type="number" min="1" max="10" name="spots" value="${r.spots}"></td>
         <td><input type="number" min="10" max="600" name="timer" value="${r.timer}"></td>
@@ -38,6 +42,8 @@ export function renderRounds() {
         <td><input type="number" min="0" max="30" name="penalty" value="${r.penalty ?? 2}"></td>
         <td>${rounds.length > 1 ? '<button class="mini danger">✕</button>' : ''}</td></tr>`);
       tr.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', () => { r[inp.name] = Number(inp.value); }));
+      tr.querySelector('select').addEventListener('change', (e) => { r.room = e.target.value; });
+      if (!r.room) r.room = roomList[0]?.id;
       tr.querySelector('button')?.addEventListener('click', () => { rounds.splice(i, 1); draw(); });
       tbody.appendChild(tr);
     });
@@ -50,7 +56,7 @@ export function renderRounds() {
     err.textContent = '';
     for (const [i, r] of rounds.entries()) {
       if (r.items > enabledItems) return (err.textContent = `Round ${i + 1} asks for ${r.items} items but only ${enabledItems} are enabled.`);
-      if (r.spots > enabledSpots) return (err.textContent = `Round ${i + 1} asks for ${r.spots} places but only ${enabledSpots} are enabled.`);
+      if (r.spots > spotsInRoom(r.room)) return (err.textContent = `Round ${i + 1} asks for ${r.spots} places but the ${roomList.find((x) => x.id === r.room)?.name || 'room'} only has ${spotsInRoom(r.room)}.`);
       if (r.items < 1 || r.spots < 1 || r.timer < 10) return (err.textContent = `Round ${i + 1} has invalid numbers.`);
     }
     await db.clear('rounds');
