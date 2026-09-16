@@ -20,6 +20,10 @@
   --fs-md: 13px;
   --fs-lg: 18px;
   --fs-xl: 28px;
+  /* bevel helpers: light top-left, dark bottom-right */
+  --bevel-light: rgba(255, 255, 255, 0.28);
+  --bevel-dark: rgba(0, 0, 0, 0.45);
+  --inset: inset 3px 3px 0 var(--bevel-light), inset -3px -3px 0 var(--bevel-dark);
 }
 
 body.easy-font {
@@ -65,14 +69,15 @@ button {
 .btn {
   display: inline-block;
   padding: 12px 20px;
-  border: 4px solid var(--ink);
-  background: var(--accent);
+  border: 3px solid #1b1b2f;
+  background: linear-gradient(180deg, #ffe9a8 0%, var(--accent) 45%, #e0a830 100%);
   color: #1b1b2f;
   text-transform: uppercase;
-  box-shadow: 4px 4px 0 #000;
-  transition: transform 0.05s;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: var(--inset), 4px 4px 0 #000;
+  transition: transform 0.05s, box-shadow 0.05s;
 }
-.btn:hover { filter: brightness(1.1); }
-.btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
-.btn.secondary { background: var(--panel-2); color: var(--ink); }
-.btn.danger { background: var(--danger); }
+.btn:hover { filter: brightness(1.08); }
+.btn:active { transform: translate(2px, 2px); box-shadow: inset 3px 3px 0 var(--bevel-dark), inset -3px -3px 0 var(--bevel-light), 2px 2px 0 #000; }
+.btn.secondary { background: linear-gradient(180deg, #3a3a5e 0%, var(--panel-2) 50%, #1e1e34 100%); color: var(--ink); text-shadow: 1px 1px 0 #000; }
+.btn.danger { background: linear-gradient(180deg, #ff8a8a 0%, var(--danger) 50%, #b93838 100%); }

@@ -10,7 +10,7 @@ All sprites are PNG with transparency, drawn for a **960 × 540** stage and rend
 | `sprites/scenes/escaped.png` | 144 × 96 | Robin running away without the sack. |
 | `sprites/scenes/caught.png` | 144 × 96 | Robin behind bars. |
 | `sprites/scenes/defeat.png` | 144 × 96 | Puzzled Robin, arms spread. |
-| `sprites/robin.png` | 48 × 72 | The hero, stands at (244, 448). |
+| `sprites/robin.png` | 48 × 72 | The hero (24 × 36 map at 2×), stands at (244, 448). |
 | `sprites/fridge.png` | 110 × 220 | Kitchen |
 | `sprites/table.png` | 200 × 120 | Kitchen |
 | `sprites/cupboard.png` | 200 × 130 | Kitchen |
@@ -24,7 +24,7 @@ All sprites are PNG with transparency, drawn for a **960 × 540** stage and rend
 | `sprites/nightstand.png` | 90 × 80 | Bedroom |
 | `sprites/chair.png` | 80 × 110 | Bedroom |
 | `sprites/box.png` | 70 × 60 | Bedroom |
-| `sprites/items/*.png` | 32 × 32 | Item icons; shown at 32 px in the loot bar and 48 px in animations. |
+| `sprites/items/*.png` | 32 × 32 | Item icons drawn 1:1 with shading + 1 px dark outline; shown at 32 px in the loot bar and 48 px in animations. |
 
 Furniture positions and the clickable **zones** (one per preposition) can be changed without touching code in the admin (**Places** tab).
 Markers for **behind** and **between** are rendered *under* the furniture sprite, so draw transparent gaps where a hidden thing should peek out.
@@ -36,6 +36,10 @@ Palette used by the placeholders:
 #5ad45a green  #ff9f43 orange  #b57bff purple #ff6fb5 pink  #2fd4c8 teal
 #8b5a2b wood   #c68a4d light wood   #c0c0d0 metal
 ```
+
+Style of the placeholders: 1–2 px pixels, quantised gradients (`vgrad/hgrad`), bevelled edges (`bevel`), shaded balls
+(`sphere`), wood grain (`wood`), translucent drop shadows and a 1 px `#111120` auto-outline around every sprite. The
+same helpers live in `tools/make-placeholders.mjs` if you want to draw more in the same look.
 
 Regenerate the placeholders any time with `node tools/make-placeholders.mjs`.
 Font: Press Start 2P by CodeMan38, SIL Open Font License.
