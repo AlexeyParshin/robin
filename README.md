@@ -44,8 +44,9 @@ Other free static hosts that work the same way: Netlify Drop (drag the folder), 
 
 ## Admin panel — adding words and pictures
 
-Open `admin.html` (there is a small “⚙ grown-ups” link on the title screen; a quick multiplication
-question keeps kids out).
+Open `admin.html` (there is a small “⚙ grown-ups” link on the title screen). The password is
+`asd123` — change `ADMIN_PASSWORD` in `src/admin/admin.js` if you want another one. It is only
+friction to keep kids out, not real security (nothing sensitive is stored in the browser).
 
 | Tab | What you can do |
 |---|---|

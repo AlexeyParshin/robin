@@ -93,18 +93,17 @@ document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () 
 }));
 
 // ---------- Grown-up gate ----------
+// Not real security: nothing sensitive lives in the browser, it's just friction for kids.
+const ADMIN_PASSWORD = 'asd123';
 {
-  const a = 3 + Math.floor(Math.random() * 6);
-  const b = 3 + Math.floor(Math.random() * 6);
-  document.getElementById('gate-q').textContent = `${a} × ${b}`;
   const input = document.getElementById('gate-a');
   const enter = () => {
-    if (Number(input.value) === a * b || sessionStorage.getItem('robin-admin') === '1') {
+    if (input.value === ADMIN_PASSWORD || sessionStorage.getItem('robin-admin') === '1') {
       sessionStorage.setItem('robin-admin', '1');
       document.getElementById('gate').remove();
       document.getElementById('admin').hidden = false;
       refresh();
-    } else { toast('Not quite — try again', true); input.select(); }
+    } else { toast('Wrong password — try again', true); input.select(); }
   };
   document.getElementById('gate-btn').addEventListener('click', enter);
   input.addEventListener('keydown', (e) => e.key === 'Enter' && enter());
