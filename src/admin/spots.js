@@ -1,5 +1,5 @@
 import { db, imageURL } from '../content/repo.js';
-import { PREPOSITIONS, PREPOSITION_ORDER, zoneOf } from '../data/content.js';
+import { PREPOSITIONS, PREPOSITION_ORDER, zoneOf, BEHIND_PREPS } from '../data/content.js';
 import { el, slug, dropZone, toast, refresh, mergedWithSource, state } from './admin.js';
 
 const page = document.getElementById('tab-spots');
@@ -44,7 +44,9 @@ export function renderSpots() {
     <label class="field" style="flex-direction:row;align-items:center;gap:8px">Room <select class="room-select">${roomList.map((r) => `<option value="${r.id}" ${r.id === room?.id ? 'selected' : ''}>${r.name}</option>`).join('')}</select></label></div>
     <div class="room-editor-wrap"><div class="room-editor" style="background-image:url('${room?.background || ''}')"></div></div>
     <p class="hint">Click a place to edit it below. When a place is selected, its coloured <b>zones</b> (one per preposition) appear —
-      drag them to where “on”, “under”, “next to”… should be clicked. Positions are in a 960×540 room.</p></div>`);
+      drag them to where “on”, “under”, “next to”… should be clicked. <b>behind</b> and <b>between</b> zones are drawn
+      <i>under</i> the picture (as in the game) — leave an edge sticking out or use a picture with gaps so the child can see and click it.
+      Positions are in a 960×540 room.</p></div>`);
   const editor = editorCard.querySelector('.room-editor');
   const wrap = editorCard.querySelector('.room-editor-wrap');
   editorCard.querySelector('.room-select').addEventListener('change', (e) => { roomFilter = e.target.value; selectedId = null; renderSpots(); });
@@ -138,8 +140,9 @@ function makeBox(s, editor) {
 function makeZoneBox(s, prep, editor) {
   const z = { ...zoneOf(s, prep) };
   const color = PREPOSITIONS[prep]?.color || '#fff';
-  const box = el(`<div class="zbox" style="left:${z.x}px;top:${z.y}px;width:${z.w}px;height:${z.h}px;--c:${color}">
-    <span class="name">${prep}</span><span class="handle"></span></div>`);
+  const behind = BEHIND_PREPS.has(prep);
+  const box = el(`<div class="zbox ${behind ? 'behind' : ''}" style="left:${z.x}px;top:${z.y}px;width:${z.w}px;height:${z.h}px;--c:${color}">
+    <span class="name">${prep}${behind ? ' (behind the picture)' : ''}</span><span class="handle"></span></div>`);
   let drag = null;
   box.addEventListener('pointerdown', (e) => {
     e.preventDefault(); e.stopPropagation();

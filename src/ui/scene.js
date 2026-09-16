@@ -1,5 +1,5 @@
 import { imageURL } from '../content/repo.js';
-import { zoneOf } from '../data/content.js';
+import { zoneOf, BEHIND_PREPS } from '../data/content.js';
 import { nounFor } from '../round.js';
 
 const container = document.getElementById('spots');
@@ -24,7 +24,7 @@ export function renderSpots(spots, handler) {
       n++;
       const z = zoneOf(spot, prep);
       const btn = document.createElement('button');
-      btn.className = 'zone';
+      btn.className = BEHIND_PREPS.has(prep) ? 'zone behind-layer' : 'zone';
       btn.dataset.spot = spot.id;
       btn.dataset.prep = prep;
       btn.dataset.n = n;

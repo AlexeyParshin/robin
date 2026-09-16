@@ -90,6 +90,11 @@ tr.disabled td { opacity: 0.45; }
 .zbox {
   position: absolute; border: 3px dashed var(--c); background: color-mix(in srgb, var(--c) 30%, transparent); cursor: move; z-index: 5;
 }
+/* behind/between zones are drawn under the furniture, like in the game; grab them by the label or the visible edge */
+.zbox.behind { z-index: 1; }
+.zbox.behind .name, .zbox.behind .handle { z-index: 3; }
+.box.selected img { opacity: 0.55; }
+.box.selected { background: transparent; }
 .zbox .name { position: absolute; left: 0; top: -20px; background: var(--c); color: #000; font-size: 11px; padding: 1px 6px; white-space: nowrap; }
 .zbox .handle { position: absolute; right: -8px; bottom: -8px; width: 14px; height: 14px; background: var(--c); border: 2px solid #000; cursor: nwse-resize; }
 

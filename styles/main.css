@@ -128,6 +128,9 @@
   cursor: pointer;
   z-index: 4;
 }
+/* "behind" / "between" markers sit under the furniture sprite — only the part that sticks out is visible */
+.zone.behind-layer { z-index: 1; background: rgba(255, 255, 255, 0.16); }
+.zone.behind-layer .label { z-index: 6; }
 .zone:hover, .zone:focus-visible { border-style: solid; border-color: var(--accent); background: rgba(255, 209, 102, 0.2); outline: none; }
 .zone .key {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);

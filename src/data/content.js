@@ -56,7 +56,7 @@ export const SPOTS = [
     id: 'shelf', room: 'living', noun: 'shelf', sprite: 'assets/sprites/shelf.png',
     x: 500, y: 110, w: 220, h: 150, prepositions: ['on', 'behind', 'between'],
     nouns: { behind: 'books', between: 'books' },
-    zones: { on: { x: 570, y: 68, w: 80, h: 40 }, behind: { x: 656, y: 120, w: 40, h: 50 }, between: { x: 600, y: 196, w: 30, h: 52 } },
+    zones: { on: { x: 570, y: 68, w: 80, h: 40 }, behind: { x: 660, y: 92, w: 40, h: 50 }, between: { x: 594, y: 196, w: 32, h: 52 } },
   },
   {
     id: 'tv', room: 'living', noun: 'TV', sprite: 'assets/sprites/tv.png',
@@ -97,6 +97,9 @@ export const SPOTS = [
 ];
 
 /** Automatic zone for a spot that has none defined for `prep`. */
+/** Prepositions whose marker is drawn BEHIND the furniture sprite (only the part sticking out is visible). */
+export const BEHIND_PREPS = new Set(['behind', 'between']);
+
 export function defaultZone(spot, prep) {
   const { x, y, w, h } = spot;
   const cw = Math.max(30, Math.round(w * 0.4));

@@ -17,7 +17,7 @@ All sprites are PNG with transparency, drawn for a **960 × 540** stage and rend
 | `sprites/bin.png` | 70 × 80 | Kitchen |
 | `sprites/sofa.png` | 220 × 120 | Living room |
 | `sprites/tv.png` | 160 × 110 | Living room |
-| `sprites/shelf.png` | 220 × 150 | Living room |
+| `sprites/shelf.png` | 220 × 150 | Living room. Open back (transparent between the books) so the *behind* / *between* markers show through. |
 | `sprites/bag.png` | 90 × 90 | Living room |
 | `sprites/bed.png` | 240 × 130 | Bedroom |
 | `sprites/wardrobe.png` | 120 × 280 | Bedroom |
@@ -27,6 +27,7 @@ All sprites are PNG with transparency, drawn for a **960 × 540** stage and rend
 | `sprites/items/*.png` | 32 × 32 | Item icons; shown at 32 px in the loot bar and 48 px in animations. |
 
 Furniture positions and the clickable **zones** (one per preposition) can be changed without touching code in the admin (**Places** tab).
+Markers for **behind** and **between** are rendered *under* the furniture sprite, so draw transparent gaps where a hidden thing should peek out.
 
 Palette used by the placeholders:
 

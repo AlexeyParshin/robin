@@ -229,13 +229,15 @@ robinScene('defeat', (c) => {
   c.outline(6, 24, 78, 60, P.K);
   c.save('bag.png');
 }
-{ // shelf 220x150
+{ // shelf 220x150 — open back so a marker BEHIND / BETWEEN the books shows through the gaps
   const c = new Canvas(220, 150);
-  c.rect(0, 0, 220, 150, P.N); c.outline(0, 0, 220, 150, P.K);
-  c.rect(8, 8, 204, 60, P.D); c.rect(8, 80, 204, 60, P.D);
+  c.rect(0, 0, 220, 8, P.N); c.rect(0, 68, 220, 12, P.N); c.rect(0, 140, 220, 10, P.N);
+  c.rect(0, 0, 8, 150, P.N); c.rect(212, 0, 8, 150, P.N);
+  c.outline(0, 0, 220, 150, P.K); c.rect(0, 68, 220, 1, P.K); c.rect(0, 79, 220, 1, P.K); c.rect(0, 140, 220, 1, P.K);
   const cols = [P.R, P.B, P.L, P.Y, P.P, P.T, P.O, P.p];
   for (let i = 0; i < 8; i++) { c.rect(14 + i * 24, 20 + (i % 3) * 4, 18, 48 - (i % 3) * 4, cols[i]); }
-  for (let i = 0; i < 6; i++) { c.rect(14 + i * 32, 92 + (i % 2) * 6, 24, 48 - (i % 2) * 6, cols[(i + 3) % 8]); }
+  // lower row: three books, a 36 px gap, three books
+  [14, 42, 70, 128, 156, 184].forEach((x, i) => c.rect(x, 92 + (i % 2) * 6, 22, 48 - (i % 2) * 6, cols[(i + 3) % 8]));
   c.save('shelf.png');
 }
 
