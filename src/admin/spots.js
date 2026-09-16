@@ -9,6 +9,22 @@ let roomFilter = null;
 
 function rooms() { return state.layers.pack?.rooms?.length ? state.layers.pack.rooms : state.layers.defaults.rooms; }
 
+// Playable area: everything outside is covered by the HUD (top), clue panel + Robin (left) or legend (bottom).
+const AREA = { x: 242, y: 64, w: 960 - 242, h: 494 - 64 };
+const clampRect = (r, drag, dx, dy, mode, min) => {
+  if (mode === 'move') {
+    r.x = Math.round(Math.max(AREA.x, Math.min(AREA.x + AREA.w - r.w, drag.x + dx)));
+    r.y = Math.round(Math.max(AREA.y, Math.min(AREA.y + AREA.h - r.h, drag.y + dy)));
+  } else {
+    r.w = Math.round(Math.max(min, Math.min(AREA.x + AREA.w - r.x, drag.w + dx)));
+    r.h = Math.round(Math.max(min, Math.min(AREA.y + AREA.h - r.y, drag.h + dy)));
+  }
+};
+const blockedHTML = `
+  <div class="blocked" style="left:0;top:0;width:960px;height:64px"><span>HUD — timer &amp; loot</span></div>
+  <div class="blocked" style="left:0;top:64px;width:242px;height:476px"><span>Clue list &amp; Robin</span></div>
+  <div class="blocked" style="left:242px;top:494px;width:718px;height:46px"><span>Preposition legend</span></div>`;
+
 function strip(rec) { const { _source, _base, _url, ...c } = rec; return c; }
 
 export function renderSpots() {
@@ -33,6 +49,7 @@ export function renderSpots() {
   const wrap = editorCard.querySelector('.room-editor-wrap');
   editorCard.querySelector('.room-select').addEventListener('change', (e) => { roomFilter = e.target.value; selectedId = null; renderSpots(); });
   for (const s of live) editor.appendChild(makeBox(s, editor));
+  editor.insertAdjacentHTML('afterbegin', blockedHTML);
   const selSpot = live.find((s) => s.id === selectedId);
   if (selSpot) for (const p of selSpot.prepositions || []) editor.appendChild(makeZoneBox(selSpot, p, editor));
   page.appendChild(editorCard);
@@ -94,13 +111,12 @@ function makeBox(s, editor) {
     const dx = (e.clientX - drag.sx) / drag.k;
     const dy = (e.clientY - drag.sy) / drag.k;
     if (drag.mode === 'move') {
-      const nx = Math.round(Math.max(0, Math.min(960 - s.w, drag.x + dx)));
-      const ny = Math.round(Math.max(0, Math.min(540 - s.h, drag.y + dy)));
-      if (s.zones) for (const z of Object.values(s.zones)) { z.x += nx - s.x; z.y += ny - s.y; }
-      s.x = nx; s.y = ny;
+      const r = { x: s.x, y: s.y, w: s.w, h: s.h };
+      clampRect(r, drag, dx, dy, 'move', 24);
+      if (s.zones) for (const z of Object.values(s.zones)) { z.x += r.x - s.x; z.y += r.y - s.y; }
+      s.x = r.x; s.y = r.y;
     } else {
-      s.w = Math.round(Math.max(24, Math.min(960 - s.x, drag.w + dx)));
-      s.h = Math.round(Math.max(24, Math.min(540 - s.y, drag.h + dy)));
+      clampRect(s, drag, dx, dy, 'resize', 24);
     }
     box.style.cssText = `left:${s.x}px;top:${s.y}px;width:${s.w}px;height:${s.h}px`;
   };
@@ -134,13 +150,7 @@ function makeZoneBox(s, prep, editor) {
     if (!drag) return;
     const dx = (e.clientX - drag.sx) / drag.k;
     const dy = (e.clientY - drag.sy) / drag.k;
-    if (drag.mode === 'move') {
-      z.x = Math.round(Math.max(0, Math.min(960 - z.w, drag.x + dx)));
-      z.y = Math.round(Math.max(0, Math.min(540 - z.h, drag.y + dy)));
-    } else {
-      z.w = Math.round(Math.max(20, Math.min(960 - z.x, drag.w + dx)));
-      z.h = Math.round(Math.max(20, Math.min(540 - z.y, drag.h + dy)));
-    }
+    clampRect(z, drag, dx, dy, drag.mode, 20);
     box.style.left = `${z.x}px`; box.style.top = `${z.y}px`; box.style.width = `${z.w}px`; box.style.height = `${z.h}px`;
   });
   const up = async () => {
@@ -163,8 +173,8 @@ function renderForm(sel, spots) {
     <div class="grid-form">
       <label class="field">Name (noun) <input type="text" name="noun" placeholder="e.g. sofa" value="${isEdit ? sel.noun : ''}"></label>
       <label class="field">Room <select name="room">${rooms().map((r) => `<option value="${r.id}" ${(sel?.room || roomFilter) === r.id ? 'selected' : ''}>${r.name}</option>`).join('')}</select></label>
-      <label class="field">X <input type="number" name="x" value="${sel?.x ?? 100}"></label>
-      <label class="field">Y <input type="number" name="y" value="${sel?.y ?? 200}"></label>
+      <label class="field">X <input type="number" name="x" value="${sel?.x ?? 400}"></label>
+      <label class="field">Y <input type="number" name="y" value="${sel?.y ?? 250}"></label>
       <label class="field">Width <input type="number" name="w" value="${sel?.w ?? 120}"></label>
       <label class="field">Height <input type="number" name="h" value="${sel?.h ?? 120}"></label>
       <div class="field"><span>Picture (PNG, max 256×256)</span><div class="zone"></div></div>
@@ -222,6 +232,9 @@ function renderForm(sel, spots) {
     const rec = isEdit ? strip(sel) : { id: slug(noun), enabled: true };
     if (!isEdit && spots.some((s) => s.id === rec.id)) rec.id = `${rec.id}-${Date.now().toString(36)}`;
     Object.assign(rec, { noun, room: card.querySelector('[name=room]').value, x: num('x'), y: num('y'), w: num('w'), h: num('h'), prepositions: PREPOSITION_ORDER.filter((p) => chosen.has(p)), nouns });
+    if (rec.x < AREA.x || rec.y < AREA.y || rec.x + rec.w > AREA.x + AREA.w || rec.y + rec.h > AREA.y + AREA.h) {
+      return (err.textContent = `The place must stay inside the playable area: X ${AREA.x}–${AREA.x + AREA.w}, Y ${AREA.y}–${AREA.y + AREA.h} (the striped parts are covered by the HUD, clue list and legend).`);
+    }
     if (!Object.keys(nouns).length) delete rec.nouns;
     if (rec.zones) { for (const p of Object.keys(rec.zones)) if (!chosen.has(p)) delete rec.zones[p]; if (!Object.keys(rec.zones).length) delete rec.zones; }
     if (pendingFile) { rec.image = pendingFile; delete rec.sprite; }

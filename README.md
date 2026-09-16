@@ -50,7 +50,7 @@ question keeps kids out).
 | Tab | What you can do |
 |---|---|
 | **Items** | Add a word + PNG picture (drag & drop), set the article (a / an / none), enable/disable, edit, delete, restore defaults |
-| **Places** | Add/edit hiding places: name, PNG sprite, drag-to-place & resize on the room preview, allowed prepositions, per-preposition noun override (e.g. *between the **books***). Select a place to see its coloured **zones** (one per preposition) and drag/resize them to where the child should click. Each place belongs to a **room** (pick the room at the top of the editor) |
+| **Places** | Add/edit hiding places: name, PNG sprite, drag-to-place & resize on the room preview, allowed prepositions, per-preposition noun override (e.g. *between the **books***). Select a place to see its coloured **zones** (one per preposition) and drag/resize them to where the child should click. Each place belongs to a **room** (pick the room at the top of the editor). Striped areas in the editor are covered by the HUD, clue list and legend — furniture and zones cannot be dragged or saved there |
 | **Rounds** | Number of items, places, timer, put-back bonus and wrong-click penalty for each heist; add/remove rounds |
 | **Export / Import** | Download or load a `content-pack.json` |
 
