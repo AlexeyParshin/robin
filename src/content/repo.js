@@ -43,12 +43,27 @@ export const db = {
 };
 
 // ---------- Pack (JSON with base64 images) ----------
-async function fetchPack() {
+async function fetchRemotePack() {
   try {
     const res = await fetch(PACK_URL, { cache: 'no-cache' });
     if (!res.ok) return null;
     return await res.json();
   } catch { return null; }
+}
+
+/** The committed pack, or the one this browser just saved to GitHub if the site hasn't redeployed yet. */
+async function fetchPack() {
+  const [remote, saved] = await Promise.all([fetchRemotePack(), db.get('meta', 'savedPack').catch(() => null)]);
+  const local = saved?.pack;
+  if (local && (!remote || (remote.exportedAt || '') < (local.exportedAt || ''))) return local;
+  if (local) db.del('meta', 'savedPack').catch(() => {}); // site caught up
+  return remote;
+}
+
+/** After a successful commit: remember the saved pack and drop local edits (they're in the pack now). */
+export async function markPackSaved(pack) {
+  await db.put('meta', { id: 'savedPack', pack });
+  await resetUserContent();
 }
 
 export function blobToDataURL(blob) {

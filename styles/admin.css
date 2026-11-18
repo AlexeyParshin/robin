@@ -61,6 +61,7 @@ tr.disabled td { opacity: 0.45; }
 .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border: 2px solid var(--c, #6b6b8f); font-size: 12px; cursor: pointer; }
 .chip input { accent-color: var(--c); }
 .chip.on { background: color-mix(in srgb, var(--c) 25%, transparent); }
+.save-badge { display: inline-block; margin-left: 6px; padding: 1px 6px; background: var(--danger); color: #fff; font-size: 10px; }
 .hint { color: #9a97b8; font-size: 12px; line-height: 1.5; }
 .error { color: var(--danger); font-size: 13px; min-height: 18px; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

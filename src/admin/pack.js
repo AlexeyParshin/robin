@@ -1,20 +1,79 @@
-import { exportPack, importPack, resetUserContent } from '../content/repo.js';
+import { exportPack, importPack, resetUserContent, markPackSaved } from '../content/repo.js';
 import { el, toast, refresh, state } from './admin.js';
+import { getToken, setToken, commitFile, repoName } from './github.js';
 
 const page = document.getElementById('tab-pack');
+const saveBtn = document.getElementById('save-btn');
+
+function localEditCount() {
+  const { user } = state.layers;
+  return user.items.length + user.spots.length + user.rounds.length;
+}
+
+function updateSaveBadge() {
+  const n = localEditCount();
+  const badge = document.getElementById('save-badge');
+  badge.hidden = n === 0;
+  badge.textContent = `${n} unsaved`;
+}
+
+function openPackTab() { document.querySelector('.tab[data-tab="pack"]').click(); }
+
+async function saveToGitHub() {
+  if (!getToken()) {
+    openPackTab();
+    toast('Add a GitHub token first (Save / Export tab)', true);
+    return;
+  }
+  const n = localEditCount();
+  if (n === 0 && !confirm('No local changes since the last save. Save anyway?')) return;
+  saveBtn.disabled = true;
+  const label = saveBtn.firstChild.textContent;
+  saveBtn.firstChild.textContent = 'Saving… ';
+  try {
+    const pack = await exportPack();
+    await commitFile('assets/content-pack.json', JSON.stringify(pack, null, 2) + '\n',
+      `Admin: update content pack (${pack.items.filter((i) => !i.deleted).length} items, ${pack.spots.filter((s) => !s.deleted).length} places)`);
+    await markPackSaved(pack);
+    toast('Saved to GitHub — the game updates in about a minute');
+    refresh();
+  } catch (e) {
+    toast(`Save failed: ${e.message}`, true);
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.firstChild.textContent = label;
+  }
+}
+saveBtn.addEventListener('click', saveToGitHub);
+window.addEventListener('beforeunload', (e) => {
+  if (state.layers && localEditCount() > 0) { e.preventDefault(); e.returnValue = ''; }
+});
 
 export function renderPack() {
-  const { user, pack } = state.layers;
-  const edits = user.items.length + user.spots.length + user.rounds.length;
+  const { pack } = state.layers;
+  const edits = localEditCount();
+  updateSaveBadge();
   page.innerHTML = '';
   const card = el(`<div><div class="card">
+    <h2>Save to GitHub</h2>
+    <p class="hint">
+      Your edits live only in <b>this browser</b> until you save (${edits} local change${edits === 1 ? '' : 's'}).
+      <b>💾 Save to GitHub</b> (top right) commits them as <code>assets/content-pack.json</code> to ${repoName};
+      every player gets them about a minute later. Images are embedded in the pack.<br>
+      Needs a GitHub fine-grained token with <b>Contents: Read and write</b> on the ${repoName} repo only
+      (github.com → Settings → Developer settings → Fine-grained tokens). It is stored only in this browser.
+    </p>
+    <div class="row" style="margin-top:12px">
+      <input type="password" class="token" placeholder="github_pat_..." autocomplete="off" style="flex:1;min-width:220px">
+      <button class="btn store-token">Save token</button>
+      <button class="btn danger forget-token">Forget token</button>
+    </div>
+    <p class="hint token-status" style="margin-top:8px">${getToken() ? '✅ Token is set in this browser.' : '⚠ No token yet — paste one above to enable saving.'}</p>
+  </div>
+  <div class="card">
     <h2>Export / Import content pack</h2>
     <p class="hint">
-      Your edits live only in <b>this browser</b> (${edits} local change${edits === 1 ? '' : 's'}).
-      To share them with everyone who plays the game:<br>
-      1. <b>Export</b> — downloads <code>content-pack.json</code> (images are embedded as base64).<br>
-      2. Put it into the game folder as <code>assets/content-pack.json</code>, commit and push.<br>
-      3. The game loads that file on start, so every player gets your words and pictures.<br>
+      Manual alternative: <b>Export</b> downloads <code>content-pack.json</code>; <b>Import</b> loads one into this browser.<br>
       ${pack ? `<span class="tag pack">A committed pack is currently loaded (${pack.items?.length ?? 0} items, ${pack.spots?.length ?? 0} places${pack.exportedAt ? ', ' + new Date(pack.exportedAt).toLocaleString() : ''}).</span>` : '<span class="tag">No committed pack found at assets/content-pack.json.</span>'}
     </p>
     <div class="row" style="margin-top:12px">
@@ -29,6 +88,14 @@ export function renderPack() {
     <button class="btn danger reset">Delete all local changes</button>
   </div></div>`);
 
+  card.querySelector('.store-token').addEventListener('click', () => {
+    const v = card.querySelector('.token').value.trim();
+    if (!v) return;
+    setToken(v);
+    toast('Token saved in this browser');
+    renderPack();
+  });
+  card.querySelector('.forget-token').addEventListener('click', () => { setToken(''); toast('Token removed'); renderPack(); });
   card.querySelector('.export').addEventListener('click', async () => {
     const pack = await exportPack();
     const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json' });
