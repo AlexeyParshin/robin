@@ -1,6 +1,6 @@
 import { db, imageURL } from '../content/repo.js';
 import { PREPOSITIONS, PREPOSITION_ORDER, zoneOf, BEHIND_PREPS } from '../data/content.js';
-import { el, slug, dropZone, toast, refresh, mergedWithSource, state } from './admin.js';
+import { el, slug, dropZone, toast, refresh, mergedWithSource, state, unsavedForms } from './admin.js';
 
 const page = document.getElementById('tab-spots');
 let selectedId = null;
@@ -219,6 +219,11 @@ function renderForm(sel, spots) {
   renderNouns();
 
   card.querySelector('.zone').appendChild(dropZone({ preview: isEdit ? imageURL(sel) : null }, (f) => { pendingFile = f; }));
+
+  const formState = () => JSON.stringify([[...card.querySelectorAll('.grid-form input, .grid-form select')].map((x) => x.value), [...chosen].sort(), nouns]);
+  const initialState = formState();
+  unsavedForms.set(isEdit ? `Places: edit of "the ${sel.noun}"` : 'Places: new place form', () =>
+    card.isConnected && (formState() !== initialState || !!pendingFile));
   card.querySelector('.cancel')?.addEventListener('click', () => { selectedId = null; pendingFile = null; renderSpots(); });
   card.querySelector('.zones-reset')?.addEventListener('click', async () => {
     const rec = strip(sel); delete rec.zones; await db.put('spots', rec); toast('Zones reset'); refresh();

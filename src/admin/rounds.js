@@ -1,7 +1,15 @@
-import { db } from '../content/repo.js';
-import { el, toast, refresh, mergedWithSource, state } from './admin.js';
+import { db, loadLayers } from '../content/repo.js';
+import { el, toast, refresh, mergedWithSource, state, unsavedForms } from './admin.js';
+import { updateSaveBadge } from './pack.js';
 
 const page = document.getElementById('tab-rounds');
+
+// Rounds are stored as you edit (no separate "Save rounds" step). Writes are queued so they never interleave.
+let writeQueue = Promise.resolve();
+let roundsInvalid = false;
+
+/** Resolves once every queued rounds write has reached IndexedDB. */
+export function flushRounds() { return writeQueue; }
 
 function currentRounds() {
   const { defaults, pack, user } = state.layers;
@@ -22,8 +30,8 @@ export function renderRounds() {
     <p class="hint">You have <b>${enabledItems}</b> enabled items and <b>${enabledSpots}</b> enabled places (${roomList.map((r) => `${r.name}: ${spotsInRoom(r.id)}`).join(', ')}). A round cannot ask for more than its room has.</p>
     <table><thead><tr><th>#</th><th>Room</th><th>Items to find</th><th>Places used</th><th>Timer (s)</th><th>Put-back bonus (s)</th><th>Wrong click penalty (s)</th><th></th></tr></thead><tbody></tbody></table>
     <div class="error"></div>
+    <p class="hint">Changes are kept automatically — press 💾 Save to GitHub when you're done.</p>
     <div class="row" style="margin-top:12px">
-      <button class="btn save">Save rounds</button>
       <button class="btn secondary add">+ Add round</button>
       <button class="btn secondary reset">Reset to defaults</button>
     </div></div>`);
@@ -41,28 +49,44 @@ export function renderRounds() {
         <td><input type="number" min="5" max="300" name="putbackBonus" value="${r.putbackBonus ?? 30}"></td>
         <td><input type="number" min="0" max="30" name="penalty" value="${r.penalty ?? 2}"></td>
         <td>${rounds.length > 1 ? '<button class="mini danger">✕</button>' : ''}</td></tr>`);
-      tr.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', () => { r[inp.name] = Number(inp.value); }));
-      tr.querySelector('select').addEventListener('change', (e) => { r.room = e.target.value; });
+      tr.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', () => { r[inp.name] = Number(inp.value); store(); }));
+      tr.querySelector('select').addEventListener('change', (e) => { r.room = e.target.value; store(); });
       if (!r.room) r.room = roomList[0]?.id;
-      tr.querySelector('button')?.addEventListener('click', () => { rounds.splice(i, 1); draw(); });
+      tr.querySelector('button')?.addEventListener('click', () => { rounds.splice(i, 1); draw(); store(); });
       tbody.appendChild(tr);
     });
   };
   draw();
 
-  card.querySelector('.add').addEventListener('click', () => { rounds.push({ ...rounds[rounds.length - 1] }); draw(); });
-  card.querySelector('.reset').addEventListener('click', async () => { await db.clear('rounds'); toast('Rounds reset'); refresh(); });
-  card.querySelector('.save').addEventListener('click', async () => {
-    err.textContent = '';
+  const validate = () => {
     for (const [i, r] of rounds.entries()) {
-      if (r.items > enabledItems) return (err.textContent = `Round ${i + 1} asks for ${r.items} items but only ${enabledItems} are enabled.`);
-      if (r.spots > spotsInRoom(r.room)) return (err.textContent = `Round ${i + 1} asks for ${r.spots} places but the ${roomList.find((x) => x.id === r.room)?.name || 'room'} only has ${spotsInRoom(r.room)}.`);
-      if (r.items < 1 || r.spots < 1 || r.timer < 10) return (err.textContent = `Round ${i + 1} has invalid numbers.`);
+      if (r.items > enabledItems) return `Round ${i + 1} asks for ${r.items} items but only ${enabledItems} are enabled.`;
+      if (r.spots > spotsInRoom(r.room)) return `Round ${i + 1} asks for ${r.spots} places but the ${roomList.find((x) => x.id === r.room)?.name || 'room'} only has ${spotsInRoom(r.room)}.`;
+      if (!(r.items >= 1 && r.spots >= 1 && r.timer >= 10)) return `Round ${i + 1} has invalid numbers.`;
     }
-    await db.clear('rounds');
-    for (let i = 0; i < rounds.length; i++) await db.put('rounds', { id: `r${i}`, index: i, ...rounds[i] });
-    toast('Rounds saved');
-    refresh();
+    return '';
+  };
+  // Store the whole list after every valid change; the page isn't re-rendered so typing keeps focus.
+  const store = () => {
+    const problem = validate();
+    err.textContent = problem ? `${problem} (not kept until fixed)` : '';
+    roundsInvalid = !!problem;
+    if (problem) return;
+    const snapshot = rounds.map((r) => ({ ...r }));
+    writeQueue = writeQueue.then(async () => {
+      await db.clear('rounds');
+      for (let i = 0; i < snapshot.length; i++) await db.put('rounds', { id: `r${i}`, index: i, ...snapshot[i] });
+      state.layers = await loadLayers();
+      updateSaveBadge();
+    }).catch((e) => toast(`Could not store rounds: ${e.message}`, true));
+  };
+
+  card.querySelector('.add').addEventListener('click', () => { rounds.push({ ...rounds[rounds.length - 1] }); draw(); store(); });
+  card.querySelector('.reset').addEventListener('click', async () => {
+    await flushRounds();
+    await db.clear('rounds'); roundsInvalid = false; toast('Rounds reset'); refresh();
   });
+  roundsInvalid = false;
+  unsavedForms.set('Rounds (invalid values, fix them first)', () => roundsInvalid);
   page.appendChild(card);
 }

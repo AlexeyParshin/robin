@@ -1,5 +1,5 @@
 import { db, imageURL } from '../content/repo.js';
-import { el, slug, dropZone, toast, refresh, mergedWithSource } from './admin.js';
+import { el, slug, dropZone, toast, refresh, mergedWithSource, unsavedForms } from './admin.js';
 
 const page = document.getElementById('tab-items');
 let editing = null; // record being edited, or null for "new"
@@ -100,6 +100,11 @@ function renderForm(items) {
   });
   article.addEventListener('change', () => { article.dataset.touched = '1'; });
   updatePreview();
+
+  const initialWord = word.value.trim().toLowerCase();
+  const initialArticle = article.value;
+  unsavedForms.set(isEdit ? `Items: edit of "${editing.word}"` : 'Items: new item form', () =>
+    word.isConnected && (word.value.trim().toLowerCase() !== initialWord || !!pendingFile || (isEdit && article.value !== initialArticle)));
 
   card.querySelector('.cancel')?.addEventListener('click', () => { editing = null; pendingFile = null; renderItems(); });
   card.querySelector('.save').addEventListener('click', async () => {

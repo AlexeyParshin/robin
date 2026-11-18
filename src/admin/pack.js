@@ -1,5 +1,6 @@
 import { exportPack, resetUserContent, markPackSaved } from '../content/repo.js';
-import { el, toast, refresh, state } from './admin.js';
+import { el, toast, refresh, state, unsavedForms } from './admin.js';
+import { flushRounds } from './rounds.js';
 import { getToken, setToken, commitFile, repoName } from './github.js';
 
 const page = document.getElementById('tab-pack');
@@ -7,10 +8,10 @@ const saveBtn = document.getElementById('save-btn');
 
 function localEditCount() {
   const { user } = state.layers;
-  return user.items.length + user.spots.length + user.rounds.length;
+  return user.items.length + user.spots.length + (user.rounds.length ? 1 : 0); // rounds are stored as one list
 }
 
-function updateSaveBadge() {
+export function updateSaveBadge() {
   const n = localEditCount();
   const badge = document.getElementById('save-badge');
   badge.hidden = n === 0;
@@ -25,6 +26,9 @@ async function saveToGitHub() {
     toast('Add a GitHub token first (GitHub tab)', true);
     return;
   }
+  await flushRounds();
+  const pending = [...unsavedForms].filter(([, isDirty]) => isDirty()).map(([name]) => name);
+  if (pending.length && !confirm(`These changes are NOT stored yet and won't be saved:\n\n• ${pending.join('\n• ')}\n\nPress Cancel to go back and finish them (Add / Save changes), or OK to save the rest anyway.`)) return;
   const n = localEditCount();
   if (n === 0 && !confirm('No local changes since the last save. Save anyway?')) return;
   saveBtn.disabled = true;

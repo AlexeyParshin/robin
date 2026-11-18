@@ -7,6 +7,9 @@ import { renderPack } from './pack.js';
 
 export const state = { layers: null };
 
+/** Forms with changes not yet stored: name → () => boolean. Checked before saving to GitHub. */
+export const unsavedForms = new Map();
+
 export function toast(msg, isError = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
