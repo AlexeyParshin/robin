@@ -121,7 +121,7 @@ export async function loadLayers() {
   return { defaults: DEFAULT_CONTENT, pack, user: { items: userItems, spots: userSpots, rounds: userRounds } };
 }
 
-// ---------- Export / import ----------
+// ---------- Export (saved to GitHub by the admin) ----------
 export async function exportPack() {
   const [pack, userItems, userSpots] = await Promise.all([fetchPack(), db.all('items'), db.all('spots')]);
   const { rounds, rooms } = await loadContent();
@@ -144,17 +144,6 @@ export async function exportPack() {
     spots: await Promise.all(content.spots.map(serialise)),
     rounds: content.rounds,
   };
-}
-
-export async function importPack(pack, { replace = false } = {}) {
-  if (!pack || typeof pack !== 'object') throw new Error('Not a content pack');
-  if (replace) await Promise.all(['items', 'spots', 'rounds'].map((s) => db.clear(s)));
-  for (const it of pack.items || []) await db.put('items', it);
-  for (const sp of pack.spots || []) await db.put('spots', sp);
-  if (Array.isArray(pack.rounds)) {
-    await db.clear('rounds');
-    for (let i = 0; i < pack.rounds.length; i++) await db.put('rounds', { id: `r${i}`, index: i, ...pack.rounds[i] });
-  }
 }
 
 export async function resetUserContent() {
